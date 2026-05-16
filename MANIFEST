@@ -20,6 +20,7 @@ META.yml
 README
 t/App-Lorem-Tickit-TextWidget/01-use.t
 t/App-Lorem-Tickit-TextWidget/02-version.t
+t/App-Lorem-Tickit-TextWidget/03-new.t
 t/App-Lorem-Tickit-Widget/01-use.t
 t/App-Lorem-Tickit-Widget/02-version.t
 t/App-Lorem-Tickit-Widget/03-new.t
