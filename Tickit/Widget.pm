@@ -270,3 +270,87 @@ sub _max {
 1;
 
 __END__
+
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+App::Lorem::Tickit::Widget - Tickit widget for lorem ipsum generator.
+
+=head1 SYNOPSIS
+
+ use App::Lorem::Tickit::Widget;
+
+ my $widget = App::Lorem::Tickit::Widget->new(
+         'version' => '0.01',
+ );
+
+=head1 METHODS
+
+=head2 C<new>
+
+ my $widget = App::Lorem::Tickit::Widget->new(%params);
+
+Constructor.
+
+Returns instance of object.
+
+=head2 C<CAN_FOCUS>
+
+ my $can_focus = $widget->CAN_FOCUS;
+
+Returns true value.
+
+=head2 C<cols>
+
+ my $cols = $widget->cols;
+
+Returns requested number of columns.
+
+=head2 C<lines>
+
+ my $lines = $widget->lines;
+
+Returns requested number of lines.
+
+=head2 C<on_key>
+
+ my $handled = $widget->on_key($event);
+
+Process keyboard event.
+
+=head2 C<render_to_rb>
+
+ $widget->render_to_rb($render_buffer, $rect);
+
+Render widget to Tickit render buffer.
+
+=head1 DEPENDENCIES
+
+L<Text::Lorem>,
+L<Tickit::Pen>,
+L<Tickit::Widget>.
+
+=head1 REPOSITORY
+
+L<https://github.com/michal-josef-spacek/App-Lorem-Tickit>
+
+=head1 AUTHOR
+
+Michal Josef Špaček L<mailto:skim@cpan.org>
+
+L<http://skim.cz>
+
+=head1 LICENSE AND COPYRIGHT
+
+© 2026 Michal Josef Špaček
+
+BSD 2-Clause License
+
+=head1 VERSION
+
+0.01
+
+=cut
