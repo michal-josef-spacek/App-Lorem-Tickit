@@ -3,7 +3,8 @@ TODO
 4. Configurable style?
 Tickit::Style->load_style_file().
 6. Add key for copy to clipboard.
-8.
+8. Move widgets outside of the this Perl module?
+9.
 
 Applied
 =======
