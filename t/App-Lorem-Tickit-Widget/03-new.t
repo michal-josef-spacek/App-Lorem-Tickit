@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use App::Lorem::Tickit;
+use App::Lorem::Tickit::Widget;
 use Test::More 'tests' => 12;
 use Test::NoWarnings;
 
