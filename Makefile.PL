@@ -24,6 +24,7 @@ requires 'Tickit' => 0;
 requires 'Tickit::Pen' => 0;
 requires 'Tickit::Widget' => 0;
 requires 'Tickit::Widget::Choice' => 0;
+requires 'Tickit::Widget::ScrollBox' => 0;
 resources 'bugtracker' => 'https://github.com/michal-josef-spacek/App-Lorem-Tickit/issues',
 resources 'homepage' => 'https://github.com/michal-josef-spacek/App-Lorem-Tickit';
 resources 'repository' => 'git://github.com/michal-josef-spacek/App-Lorem-Tickit';

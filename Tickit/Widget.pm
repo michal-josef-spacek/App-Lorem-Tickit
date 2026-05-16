@@ -4,9 +4,11 @@ use parent 'Tickit::Widget';
 use strict;
 use warnings;
 
+use App::Lorem::Tickit::TextWidget;
 use Text::Lorem;
 use Tickit::Pen;
 use Tickit::Widget::Choice;
+use Tickit::Widget::ScrollBox;
 
 our $VERSION = 0.01;
 
@@ -33,6 +35,11 @@ sub new {
 			return;
 		},
 	);
+	$self->{'_text_widget'} = App::Lorem::Tickit::TextWidget->new;
+	$self->{'_scrollbox'} = Tickit::Widget::ScrollBox->new(
+		'vertical' => 'on_demand',
+		'horizontal' => 0,
+	)->set_child($self->{'_text_widget'});
 	$self->_regenerate;
 
 	return $self;
@@ -66,6 +73,10 @@ sub window_lost {
 		$self->{'_choice'}->window->close;
 		$self->{'_choice'}->set_window(undef);
 	}
+	if ($self->{'_scrollbox'}->window) {
+		$self->{'_scrollbox'}->window->close;
+		$self->{'_scrollbox'}->set_window(undef);
+	}
 
 	$self->SUPER::window_lost(@_);
 
@@ -93,6 +104,12 @@ sub on_key {
 		$self->_regenerate;
 		$self->redraw;
 		return 1;
+	} elsif ($key eq 'PageUp') {
+		$self->_scroll_page(-1);
+		return 1;
+	} elsif ($key eq 'PageDown') {
+		$self->_scroll_page(1);
+		return 1;
 	} elsif ($key eq 'q' || $key eq 'C-c') {
 		$self->window->tickit->stop if $self->window;
 		return 1;
@@ -109,6 +126,9 @@ sub reshape {
 
 	my $cols = $win->cols;
 	my $choice_win = $self->{'_choice'}->window;
+	my $text_top = 3;
+	my $text_lines = _max(0, $win->lines - $text_top - 1);
+	my $scroll_win = $self->{'_scrollbox'}->window;
 
 	if ($choice_win) {
 		$choice_win->change_geometry(0, 0, 1, $cols);
@@ -117,6 +137,17 @@ sub reshape {
 		$self->{'_choice'}->set_window($choice_win);
 	}
 	$self->{'_choice'}->take_focus;
+	$self->_sync_text_widget;
+
+	if ($scroll_win) {
+		$scroll_win->change_geometry($text_top, 0, $text_lines, $cols);
+	} elsif ($text_lines > 0) {
+		$scroll_win = $win->make_sub($text_top, 0, $text_lines, $cols);
+		$self->{'_scrollbox'}->set_window($scroll_win);
+	}
+	if ($scroll_win && delete $self->{'_reset_scroll'}) {
+		$self->{'_scrollbox'}->scroll_to(0, 0);
+	}
 
 	return;
 }
@@ -133,7 +164,6 @@ sub render_to_rb {
 	my $cols = $win->cols;
 
 	$self->_render_count($rb, 1, $cols);
-	$self->_render_text($rb, 3, _max(0, $lines - 5), $cols);
 	$self->_render_status($rb, $lines - 1, $cols);
 
 	return;
@@ -153,36 +183,12 @@ sub _render_count {
 	return;
 }
 
-sub _render_text {
-	my ($self, $rb, $top, $height, $cols) = @_;
-
-	return if $height <= 0 || $cols <= 0;
-
-	my $width = _max(10, $cols - 4);
-	my @wrapped = _wrap_text($self->{'_text'}, $width);
-	my $start = $top + int(($height - @wrapped) / 2);
-	$start = $top if $start < $top;
-	my $max_line = $top + $height - 1;
-	my $pen = Tickit::Pen->new('fg' => 'green', 'bg' => 'black');
-
-	for my $i (0 .. $#wrapped) {
-		my $line_no = $start + $i;
-		last if $line_no > $max_line;
-		my $line = $wrapped[$i];
-		my $col = int(($cols - length $line) / 2);
-		$col = 0 if $col < 0;
-		$rb->text_at($line_no, $col, $line, $pen);
-	}
-
-	return;
-}
-
 sub _render_status {
 	my ($self, $rb, $line, $cols) = @_;
 
 	return if $line < 0 || $cols <= 0;
 
-	my $left = '+/- count, Tab choice, Space menu, q quit';
+	my $left = '+/- count, Tab choice, Space menu, PgUp/PgDn scroll, q quit';
 	my $right = 'v'.$self->{'_version'};
 	my $pen = Tickit::Pen->new('fg' => 'black', 'bg' => 'white');
 
@@ -240,6 +246,8 @@ sub _regenerate {
 	} else {
 		$self->{'_text'} = $self->{'_lorem'}->words($self->{'_counts'}->{'words'});
 	}
+	$self->_sync_text_widget;
+	$self->{'_reset_scroll'} = 1;
 
 	return;
 }
@@ -264,32 +272,29 @@ sub _mode {
 	return $self->{'_choice'}->chosen_value;
 }
 
-sub _wrap_text {
-	my ($text, $width) = @_;
+sub _scroll_page {
+	my ($self, $direction) = @_;
 
-	my @lines;
-	foreach my $paragraph (split /\n\n+/, $text) {
-		my @words = split /\s+/, $paragraph;
-		my $line = '';
-		foreach my $word (@words) {
-			while (length $word > $width) {
-				push @lines, substr($word, 0, $width, '');
-			}
-			if ($line eq '') {
-				$line = $word;
-			} elsif (length($line) + 1 + length($word) <= $width) {
-				$line .= ' '.$word;
-			} else {
-				push @lines, $line;
-				$line = $word;
-			}
-		}
-		push @lines, $line if $line ne '';
-		push @lines, '';
-	}
-	pop @lines if @lines && $lines[-1] eq '';
+	my $extent = $self->{'_scrollbox'}->vextent;
+	return if ! defined $extent->viewport;
 
-	return @lines;
+	my $amount = int($extent->viewport / 2);
+	$amount = 1 if $amount < 1;
+	$self->{'_scrollbox'}->scroll($direction * $amount, 0);
+
+	return;
+}
+
+sub _sync_text_widget {
+	my $self = shift;
+
+	return if ! $self->{'_text_widget'};
+
+	my $win = $self->window;
+	my $width = $win ? _max(10, $win->cols - 5) : 76;
+	$self->{'_text_widget'}->set_text($self->{'_text'}, $width);
+
+	return;
 }
 
 sub _min {
@@ -384,10 +389,12 @@ Render widget to Tickit render buffer.
 
 =head1 DEPENDENCIES
 
+L<App::Lorem::Tickit::TextWidget>,
 L<Text::Lorem>,
 L<Tickit::Pen>,
 L<Tickit::Widget>,
-L<Tickit::Widget::Choice>.
+L<Tickit::Widget::Choice>,
+L<Tickit::Widget::ScrollBox>.
 
 =head1 REPOSITORY
 
