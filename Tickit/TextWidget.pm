@@ -54,7 +54,7 @@ sub render_to_rb {
 	return if ! $win;
 
 	my $cols = $win->cols;
-	my $pen = Tickit::Pen->new('fg' => 'green', 'bg' => 'black');
+	my $pen = Tickit::Pen->new('fg' => 'white', 'bg' => 'black');
 
 	$rb->eraserect($rect, Tickit::Pen->new('bg' => 'black'));
 	for my $line_no ($rect->linerange) {
