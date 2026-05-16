@@ -1,7 +1,6 @@
 TODO
 ====
 2. Add doc for Widget.
-3. Rewrite to English.
 4. Configurable style?
 5. Improve popup.
 6.
@@ -9,4 +8,7 @@ TODO
 Applied
 =======
 1. Implement in Tickit something like https://gitlab.gnome.org/World/design/lorem
+OK [20260616] skim
+
+3. Rewrite to English.
 OK [20260616] skim

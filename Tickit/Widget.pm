@@ -99,16 +99,16 @@ sub _render_popup {
 	my $selected = Tickit::Pen->new('fg' => 'yellow', 'bg' => 'blue', 'b' => 1);
 	my $top = '+' . ('-' x ($width - 2)) . '+';
 	my @rows = (
-		['paragraphs', 'odstavce', $self->{'_counts'}->{'paragraphs'}],
-		['sentences', 'vety', $self->{'_counts'}->{'sentences'}],
-		['words', 'slova', $self->{'_counts'}->{'words'}],
+		['paragraphs', 'paragraphs', $self->{'_counts'}->{'paragraphs'}],
+		['sentences', 'sentences', $self->{'_counts'}->{'sentences'}],
+		['words', 'words', $self->{'_counts'}->{'words'}],
 	);
 
 	$rb->text_at(0, $left, $top, $normal);
 	for my $i (0 .. $#rows) {
 		my ($id, $label, $count) = @{$rows[$i]};
 		my $prefix = $self->{'_mode'} eq $id ? '*' : ' ';
-		my $text = sprintf('| %s %-9s %6d %s', $prefix, $label.':', $count, '|');
+		my $text = sprintf('| %s %-10s %6d %s', $prefix, $label.':', $count, '|');
 		$text = substr($text, 0, $width);
 		$text .= ' ' x ($width - length $text);
 		my $pen = $self->{'_active'} eq $id ? $active : $normal;
@@ -151,7 +151,7 @@ sub _render_status {
 
 	return if $line < 0 || $cols <= 0;
 
-	my $left = '+/- pocet, Tab volba, Enter generator, q konec';
+	my $left = '+/- count, Tab setting, Enter generator, q quit';
 	my $right = 'v'.$self->{'_version'};
 	my $pen = Tickit::Pen->new('fg' => 'black', 'bg' => 'white');
 
