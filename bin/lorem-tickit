@@ -7,8 +7,10 @@ use App::Lorem::Tickit;
 
 our $VERSION = 0.01;
 
+# Run.
 exit App::Lorem::Tickit->new->run;
 
+# Print version.
 sub VERSION_MESSAGE {
 	print $VERSION."\n";
 	exit 0;
