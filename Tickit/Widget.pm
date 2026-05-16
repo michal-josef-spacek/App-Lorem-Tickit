@@ -6,6 +6,7 @@ use warnings;
 
 use Text::Lorem;
 use Tickit::Pen;
+use Tickit::Widget::Choice;
 
 our $VERSION = 0.01;
 
@@ -13,8 +14,6 @@ sub new {
 	my ($class, %args) = @_;
 
 	my $self = $class->SUPER::new(%args);
-	$self->{'_active'} = 'paragraphs';
-	$self->{'_mode'} = 'paragraphs';
 	$self->{'_counts'} = {
 		'paragraphs' => 3,
 		'sentences' => 8,
@@ -22,6 +21,18 @@ sub new {
 	};
 	$self->{'_lorem'} = Text::Lorem->new;
 	$self->{'_version'} = $args{'version'} || $VERSION;
+	$self->{'_choice'} = Tickit::Widget::Choice->new(
+		'choices' => [
+			['paragraphs', 'paragraphs'],
+			['sentences', 'sentences'],
+			['words', 'words'],
+		],
+		'on_changed' => sub {
+			$self->_regenerate;
+			$self->redraw;
+			return;
+		},
+	);
 	$self->_regenerate;
 
 	return $self;
@@ -39,6 +50,28 @@ sub lines {
 	return 10;
 }
 
+sub window_gained {
+	my $self = shift;
+
+	$self->SUPER::window_gained(@_);
+	$self->reshape;
+
+	return;
+}
+
+sub window_lost {
+	my $self = shift;
+
+	if ($self->{'_choice'}->window) {
+		$self->{'_choice'}->window->close;
+		$self->{'_choice'}->set_window(undef);
+	}
+
+	$self->SUPER::window_lost(@_);
+
+	return;
+}
+
 sub on_key {
 	my $self = shift;
 	my ($ev) = @_;
@@ -51,13 +84,12 @@ sub on_key {
 		$self->_change_count(-1);
 		return 1;
 	} elsif ($key eq 'Tab' || $key eq 'Down' || $key eq 'Right') {
-		$self->_next_active;
+		$self->_next_choice;
 		return 1;
 	} elsif ($key eq 'Up' || $key eq 'Left') {
-		$self->_prev_active;
+		$self->_prev_choice;
 		return 1;
 	} elsif ($key eq 'Enter' || $key eq 'Space') {
-		$self->{'_mode'} = $self->{'_active'};
 		$self->_regenerate;
 		$self->redraw;
 		return 1;
@@ -67,6 +99,28 @@ sub on_key {
 	}
 
 	return 0;
+}
+
+sub reshape {
+	my $self = shift;
+	my $win = $self->window;
+
+	return if ! $win;
+
+	my $cols = $win->cols;
+	my $choice_width = _min(30, _max(16, $cols - 2));
+	my $choice_left = int(($cols - $choice_width) / 2);
+	my $choice_win = $self->{'_choice'}->window;
+
+	if ($choice_win) {
+		$choice_win->change_geometry(1, $choice_left, 1, $choice_width);
+	} else {
+		$choice_win = $win->make_sub(1, $choice_left, 1, $choice_width);
+		$self->{'_choice'}->set_window($choice_win);
+	}
+	$self->{'_choice'}->take_focus;
+
+	return;
 }
 
 sub render_to_rb {
@@ -79,45 +133,26 @@ sub render_to_rb {
 
 	my $lines = $win->lines;
 	my $cols = $win->cols;
-	my $popup_width = _min(30, _max(22, $cols - 2));
-	my $popup_left = int(($cols - $popup_width) / 2);
 
-	$self->_render_popup($rb, $popup_left, $popup_width);
+	$self->_render_count($rb, 3, $cols);
 	$self->_render_text($rb, 5, _max(0, $lines - 7), $cols);
 	$self->_render_status($rb, $lines - 1, $cols);
-
-	$win->focus(0, 0);
 
 	return;
 }
 
-sub _render_popup {
-	my ($self, $rb, $left, $width) = @_;
+sub _render_count {
+	my ($self, $rb, $line, $cols) = @_;
 
-	my $normal = Tickit::Pen->new('fg' => 'white', 'bg' => 'blue');
-	my $active = Tickit::Pen->new('fg' => 'black', 'bg' => 'cyan');
-	my $selected = Tickit::Pen->new('fg' => 'yellow', 'bg' => 'blue', 'b' => 1);
-	my $top = '+' . ('-' x ($width - 2)) . '+';
-	my @rows = (
-		['paragraphs', 'paragraphs', $self->{'_counts'}->{'paragraphs'}],
-		['sentences', 'sentences', $self->{'_counts'}->{'sentences'}],
-		['words', 'words', $self->{'_counts'}->{'words'}],
-	);
+	return if $cols <= 0;
 
-	$rb->text_at(0, $left, $top, $normal);
-	for my $i (0 .. $#rows) {
-		my ($id, $label, $count) = @{$rows[$i]};
-		my $prefix = $self->{'_mode'} eq $id ? '*' : ' ';
-		my $text = sprintf('| %s %-10s %6d %s', $prefix, $label.':', $count, '|');
-		$text = substr($text, 0, $width);
-		$text .= ' ' x ($width - length $text);
-		my $pen = $self->{'_active'} eq $id ? $active : $normal;
-		$rb->text_at($i + 1, $left, $text, $pen);
-		if ($self->{'_mode'} eq $id && $self->{'_active'} ne $id) {
-			$rb->text_at($i + 1, $left + 2, '*', $selected);
-		}
-	}
-	$rb->text_at(@rows + 1, $left, $top, $normal);
+	my $mode = $self->_mode;
+	my $count = $self->{'_counts'}->{$mode};
+	my $text = 'count: '.$count;
+	my $col = int(($cols - length $text) / 2);
+	$col = 0 if $col < 0;
+
+	$rb->text_at($line, $col, $text, Tickit::Pen->new('fg' => 'white', 'bg' => 'black'));
 
 	return;
 }
@@ -151,7 +186,7 @@ sub _render_status {
 
 	return if $line < 0 || $cols <= 0;
 
-	my $left = '+/- count, Tab setting, Enter generator, q quit';
+	my $left = '+/- count, Tab choice, Space menu, q quit';
 	my $right = 'v'.$self->{'_version'};
 	my $pen = Tickit::Pen->new('fg' => 'black', 'bg' => 'white');
 
@@ -171,60 +206,66 @@ sub _render_status {
 sub _change_count {
 	my ($self, $delta) = @_;
 
-	my $active = $self->{'_active'};
-	my $value = $self->{'_counts'}->{$active} + $delta;
+	my $mode = $self->_mode;
+	my $value = $self->{'_counts'}->{$mode} + $delta;
 	$value = 1 if $value < 1;
-	$self->{'_counts'}->{$active} = $value;
-	$self->{'_mode'} = $active;
+	$self->{'_counts'}->{$mode} = $value;
 	$self->_regenerate;
 	$self->redraw;
 
 	return;
 }
 
-sub _next_active {
+sub _next_choice {
 	my $self = shift;
 
-	if ($self->{'_active'} eq 'paragraphs') {
-		$self->{'_active'} = 'sentences';
-	} elsif ($self->{'_active'} eq 'sentences') {
-		$self->{'_active'} = 'words';
-	} else {
-		$self->{'_active'} = 'paragraphs';
-	}
-	$self->redraw;
+	$self->_choose_relative(1);
 
 	return;
 }
 
-sub _prev_active {
+sub _prev_choice {
 	my $self = shift;
 
-	if ($self->{'_active'} eq 'paragraphs') {
-		$self->{'_active'} = 'words';
-	} elsif ($self->{'_active'} eq 'sentences') {
-		$self->{'_active'} = 'paragraphs';
-	} else {
-		$self->{'_active'} = 'sentences';
-	}
-	$self->redraw;
+	$self->_choose_relative(-1);
 
 	return;
 }
 
 sub _regenerate {
 	my $self = shift;
+	my $mode = $self->_mode;
 
-	if ($self->{'_mode'} eq 'paragraphs') {
+	if ($mode eq 'paragraphs') {
 		my @paragraphs = $self->{'_lorem'}->paragraphs($self->{'_counts'}->{'paragraphs'});
 		$self->{'_text'} = join "\n\n", @paragraphs;
-	} elsif ($self->{'_mode'} eq 'sentences') {
+	} elsif ($mode eq 'sentences') {
 		$self->{'_text'} = $self->{'_lorem'}->sentences($self->{'_counts'}->{'sentences'});
 	} else {
 		$self->{'_text'} = $self->{'_lorem'}->words($self->{'_counts'}->{'words'});
 	}
 
 	return;
+}
+
+sub _choose_relative {
+	my ($self, $delta) = @_;
+
+	my @modes = qw(paragraphs sentences words);
+	my $mode = $self->_mode;
+	my ($index) = grep { $modes[$_] eq $mode } 0 .. $#modes;
+	$index += $delta;
+	$index = $#modes if $index < 0;
+	$index = 0 if $index > $#modes;
+	$self->{'_choice'}->choose_by_value($modes[$index]);
+
+	return;
+}
+
+sub _mode {
+	my $self = shift;
+
+	return $self->{'_choice'}->chosen_value;
 }
 
 sub _wrap_text {
@@ -315,11 +356,29 @@ Returns requested number of columns.
 
 Returns requested number of lines.
 
+=head2 C<window_gained>
+
+ $widget->window_gained($window);
+
+Create and place the choice widget window.
+
+=head2 C<window_lost>
+
+ $widget->window_lost($window);
+
+Release the choice widget window.
+
 =head2 C<on_key>
 
  my $handled = $widget->on_key($event);
 
 Process keyboard event.
+
+=head2 C<reshape>
+
+ $widget->reshape;
+
+Resize and reposition the choice widget window.
 
 =head2 C<render_to_rb>
 
@@ -331,7 +390,8 @@ Render widget to Tickit render buffer.
 
 L<Text::Lorem>,
 L<Tickit::Pen>,
-L<Tickit::Widget>.
+L<Tickit::Widget>,
+L<Tickit::Widget::Choice>.
 
 =head1 REPOSITORY
 

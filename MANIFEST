@@ -24,6 +24,7 @@ t/App-Lorem-Tickit-Widget/03-new.t
 t/App-Lorem-Tickit/01-use.t
 t/App-Lorem-Tickit/02-version.t
 t/App-Lorem-Tickit/03-new.t
+t/App-Lorem-Tickit/04-run.t
 Tickit.pm
 Tickit/Widget.pm
 xt/App-Lorem-Tickit-Widget/01-pod_coverage.t

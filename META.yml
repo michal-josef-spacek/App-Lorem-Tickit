@@ -31,6 +31,7 @@ requires:
   Tickit: 0
   Tickit::Pen: 0
   Tickit::Widget: 0
+  Tickit::Widget::Choice: 0
   perl: 5.6.0
 resources:
   bugtracker: https://github.com/michal-josef-spacek/App-Lorem-Tickit/issues
