@@ -108,14 +108,12 @@ sub reshape {
 	return if ! $win;
 
 	my $cols = $win->cols;
-	my $choice_width = _min(30, _max(16, $cols - 2));
-	my $choice_left = int(($cols - $choice_width) / 2);
 	my $choice_win = $self->{'_choice'}->window;
 
 	if ($choice_win) {
-		$choice_win->change_geometry(1, $choice_left, 1, $choice_width);
+		$choice_win->change_geometry(0, 0, 1, $cols);
 	} else {
-		$choice_win = $win->make_sub(1, $choice_left, 1, $choice_width);
+		$choice_win = $win->make_sub(0, 0, 1, $cols);
 		$self->{'_choice'}->set_window($choice_win);
 	}
 	$self->{'_choice'}->take_focus;
@@ -134,8 +132,8 @@ sub render_to_rb {
 	my $lines = $win->lines;
 	my $cols = $win->cols;
 
-	$self->_render_count($rb, 3, $cols);
-	$self->_render_text($rb, 5, _max(0, $lines - 7), $cols);
+	$self->_render_count($rb, 1, $cols);
+	$self->_render_text($rb, 3, _max(0, $lines - 5), $cols);
 	$self->_render_status($rb, $lines - 1, $cols);
 
 	return;
@@ -149,10 +147,8 @@ sub _render_count {
 	my $mode = $self->_mode;
 	my $count = $self->{'_counts'}->{$mode};
 	my $text = 'count: '.$count;
-	my $col = int(($cols - length $text) / 2);
-	$col = 0 if $col < 0;
 
-	$rb->text_at($line, $col, $text, Tickit::Pen->new('fg' => 'white', 'bg' => 'black'));
+	$rb->text_at($line, 0, $text, Tickit::Pen->new('fg' => 'white', 'bg' => 'black'));
 
 	return;
 }
