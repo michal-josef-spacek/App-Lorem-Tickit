@@ -36,6 +36,10 @@ CONTROLS
 REPOSITORY
     <https://github.com/michal-josef-spacek/App-Lorem-Tickit>
 
+SEE ALSO
+    Lorem <https://flathub.org/en/apps/org.gnome.design.Lorem>
+        Simple app to generate the well-known Lorem Ipsum placeholder text.
+
 AUTHOR
     Michal Josef Špaček <mailto:skim@cpan.org>
 

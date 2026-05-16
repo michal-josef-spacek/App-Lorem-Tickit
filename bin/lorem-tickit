@@ -72,6 +72,16 @@ Quit.
 
 L<https://github.com/michal-josef-spacek/App-Lorem-Tickit>
 
+=head1 SEE ALSO
+
+=over
+
+=item L<Lorem|https://flathub.org/en/apps/org.gnome.design.Lorem>
+
+Simple app to generate the well-known Lorem Ipsum placeholder text.
+
+=back
+
 =head1 AUTHOR
 
 Michal Josef Špaček L<mailto:skim@cpan.org>
