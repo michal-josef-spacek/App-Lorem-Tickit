@@ -3,6 +3,7 @@ TODO
 4. Configurable style?
 Tickit::Style->load_style_file().
 5. Improve popup.
+Rewrite to Tickit::Widget::Choice
 6. Add key for copy to clipboard.
 7. Add scrollbar for long lorem text.
 8.
