@@ -71,11 +71,15 @@ App::Lorem::Tickit - Base class for lorem-tickit script.
 
 Constructor.
 
+Returns instance of object.
+
 =head2 C<run>
 
  my $exit_code = $app->run;
 
 Run Tickit lorem generator.
+
+Returns exit code.
 
 =head1 DEPENDENCIES
 
