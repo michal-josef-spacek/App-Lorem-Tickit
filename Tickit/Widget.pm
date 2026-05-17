@@ -10,7 +10,7 @@ use Tickit::Pen;
 use Tickit::Widget::Choice;
 use Tickit::Widget::ScrollBox;
 
-our $VERSION = 0.01;
+our $VERSION = 0.02;
 
 sub new {
 	my ($class, %args) = @_;
@@ -414,6 +414,6 @@ BSD 2-Clause License
 
 =head1 VERSION
 
-0.01
+0.02
 
 =cut
